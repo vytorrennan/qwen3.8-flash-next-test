@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>astuning — crafting software block by block</title>
+<meta name="description" content="Personal site of astuning, a developer who builds software the way they build worlds: block by block.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2379553a'/%3E%3Crect width='16' height='5' fill='%236cbf4a'/%3E%3Crect x='2' y='7' width='3' height='3' fill='%235e3a17'/%3E%3Crect x='9' y='9' width='4' height='4' fill='%238f6b45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="debug" aria-hidden="true">astuning.dev &bull; v1.21 &bull; <span id="fps">60</span> fps</div>
+
+<header class="hero" id="home">
+  <canvas id="voxel" aria-hidden="true"></canvas>
+  <div class="hero-content">
+    <div class="badge">LVL 42 SOFTWARE ARTISAN</div>
+    <h1>astuning</h1>
+    <p class="tagline">I craft software the way I craft worlds &mdash; block by block,<br>redstone by redstone, commit by commit.</p>
+    <div class="hero-buttons">
+      <a class="mc-btn" href="#projects">View Projects</a>
+      <a class="mc-btn mc-btn--ghost" href="#contact">Send a Message</a>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">scroll down v</div>
+</header>
+
+<main>
+
+<section id="about" class="section">
+  <h2 class="section-title"><span class="cube cube--grass"></span>About the dev</h2>
+  <div class="player-card reveal">
+    <canvas id="avatar" width="8" height="8" aria-label="Pixel avatar of astuning"></canvas>
+    <div class="player-info">
+      <h3>astuning</h3>
+      <p class="player-class">Class: Redstone Engineer / Full-Stack Wizard</p>
+      <p class="player-bio">
+        Hi &mdash; I'm a developer who treats codebases like terrain: generate it procedurally where
+        you can, build by hand where it matters, and always leave the world better than you found it.
+        I like small tools, fast feedback loops, and interfaces that feel like you can pick them up
+        and place them somewhere.
+      </p>
+      <ul class="stats">
+        <li><span>Commits mined</span><b>12,480</b></li>
+        <li><span>Bugs slain</span><b>9,001</b></li>
+        <li><span>Coffee consumed</span><b>1,337 buckets</b></li>
+        <li><span>Worlds generated</span><b>14</b></li>
+        <li><span>Uptime kept</span><b>99.98%</b></li>
+      </ul>
+    </div>
+  </div>
+  <div class="achievements">
+    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>First Hello World</span></div>
+    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>Open Source Contributor</span></div>
+    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>10k Commits</span></div>
+    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>Home Lab Herder</span></div>
+  </div>
+</section>
+
+<section id="skills" class="section">
+  <h2 class="section-title"><span class="cube cube--diamond"></span>Inventory</h2>
+  <div class="inventory">
+    <div class="slot-item reveal" data-name="TypeScript &mdash; LVL 9"><div class="item item--ts">TS</div><span class="item-name">TypeScript</span><div class="xp"><i style="--xp:90%"></i></div></div>
+    <div class="slot-item reveal" data-name="Git &mdash; LVL 9"><div class="item item--git">GIT</div><span class="item-name">Git</span><div class="xp"><i style="--xp:90%"></i></div></div>
+    <div class="slot-item reveal" data-name="Rust &mdash; LVL 8"><div class="item item--rust">RS</div><span class="item-name">Rust</span><div class="xp"><i style="--xp:80%"></i></div></div>
+    <div class="slot-item reveal" data-name="Python &mdash; LVL 8"><div class="item item--py">PY</div><span class="item-name">Python</span><div class="xp"><i style="--xp:80%"></i></div></div>
+    <div class="slot-item reveal" data-name="Linux &mdash; LVL 8"><div class="item item--linux">:(){</div><span class="item-name">Linux</span><div class="xp"><i style="--xp:80%"></i></div></div>
+    <div class="slot-item reveal" data-name="Go &mdash; LVL 7"><div class="item item--go">GO</div><span class="item-name">Go</span><div class="xp"><i style="--xp:70%"></i></div></div>
+    <div class="slot-item reveal" data-name="Docker &mdash; LVL 7"><div class="item item--docker">DKR</div><span class="item-name">Docker</span><div class="xp"><i style="--xp:70%"></i></div></div>
+    <div class="slot-item reveal" data-name="SQL &mdash; LVL 6"><div class="item item--sql">SQL</div><span class="item-name">SQL</span><div class="xp"><i style="--xp:60%"></i></div></div>
+  </div>
+</section>
+
+<section id="projects" class="section">
+  <h2 class="section-title"><span class="cube cube--tnt"></span>Projects</h2>
+  <div class="projects">
+    <article class="block-card reveal">
+      <div class="block-top"></div>
+      <h3>Chunk Engine</h3>
+      <p class="lore">Procedural terrain generator</p>
+      <p class="desc">A Rust + WASM terrain engine that streams infinite voxel chunks at 60 fps in the browser. Noise pipelines, greedy meshing, zero allocations per frame.</p>
+      <div class="tags"><span>rust</span><span>wasm</span><span>webgl</span></div>
+      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
+    </article>
+    <article class="block-card reveal">
+      <div class="block-top"></div>
+      <h3>Redstone CLI</h3>
+      <p class="lore">Build pipelines you can see</p>
+      <p class="desc">A task runner that renders your build graph as a live circuit diagram. Watch targets fire, cache, and propagate like signal through wire.</p>
+      <div class="tags"><span>go</span><span>cli</span><span>tui</span></div>
+      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
+    </article>
+    <article class="block-card reveal">
+      <div class="block-top"></div>
+      <h3>Nether Net</h3>
+      <p class="lore">Home-lab network dashboard</p>
+      <p class="desc">Self-hosted mesh overview for my homelab: nodes as portals, traffic as particles, alerts as chunk borders. Runs on a single Raspberry Pi.</p>
+      <div class="tags"><span>typescript</span><span>self-hosted</span></div>
+      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
+    </article>
+    <article class="block-card reveal">
+      <div class="block-top"></div>
+      <h3>Voxel Vault</h3>
+      <p class="lore">E2E-encrypted notes</p>
+      <p class="desc">Notes stored as blocks, synced as chunks, encrypted client-side. The UI is deliberately blocky: every note is a placeable, stackable item.</p>
+      <div class="tags"><span>rust</span><span>sqlite</span><span>e2ee</span></div>
+      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
+    </article>
+  </div>
+</section>
+
+<section id="contact" class="section">
+  <h2 class="section-title"><span class="cube cube--gold"></span>Place a sign</h2>
+  <div class="sign reveal">
+    <p>Open to collabs, open source, and odd ideas. Right-click to write.</p>
+    <a class="mc-btn" href="mailto:hello@astuning.dev">hello@astuning.dev</a>
+    <div class="socials">
+      <a href="#">github.com/astuning</a>
+      <a href="#">discord &middot; astuning</a>
+      <a href="#">rss feed</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="dirt-strip" aria-hidden="true"></div>
+  <p>&copy; 2026 astuning &mdash; built with blocks, not frameworks. Not affiliated with Mojang.</p>
+</footer>
+
+<nav class="hotbar" aria-label="Site sections">
+  <a href="#home" class="slot active"><span class="slot-num">1</span><span class="slot-label">Home</span></a>
+  <a href="#about" class="slot"><span class="slot-num">2</span><span class="slot-label">About</span></a>
+  <a href="#skills" class="slot"><span class="slot-num">3</span><span class="slot-label">Skills</span></a>
+  <a href="#projects" class="slot"><span class="slot-num">4</span><span class="slot-label">Work</span></a>
+  <a href="#contact" class="slot"><span class="slot-num">5</span><span class="slot-label">Chat</span></a>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
