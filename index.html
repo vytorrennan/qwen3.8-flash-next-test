@@ -1,146 +1,961 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>astuning — crafting software block by block</title>
-<meta name="description" content="Personal site of astuning, a developer who builds software the way they build worlds: block by block.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2379553a'/%3E%3Crect width='16' height='5' fill='%236cbf4a'/%3E%3Crect x='2' y='7' width='3' height='3' fill='%235e3a17'/%3E%3Crect x='9' y='9' width='4' height='4' fill='%238f6b45'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alex Carter — Full-Stack Developer · Crafted in Blocks</title>
+<meta name="description" content="Personal site of Alex Carter, a full-stack developer who builds software one block at a time. Voxel-style, Minecraft-inspired." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%236cbb4c'/><rect y='6' width='16' height='10' fill='%238a6b45'/><rect width='8' height='4' fill='%2374c353'/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --grass:#6cbb4c;
+    --grass2:#74c353;
+    --dirt:#8a6b45;
+    --stone:#8b8b93;
+    --gold:#ffae1e;
+    --diamond:#4dd0e1;
+    --panel:#1f2024;
+    --panel-border:#5a5b63;
+    --slot:#4a4b52;
+    --slot-dark:#2b2c31;
+    --slot-light:#6a6b73;
+    --text:#d7d7de;
+    --text-dim:#9c9ca6;
+    --red:#d03131;
+    --purple:#a78ae0;
+    --green-bar:#5fb34f;
+    --sky-top:#8fd1ff;
+    --sky-bottom:#cdefff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:"VT323",monospace;
+    font-size:20px;
+    color:var(--text);
+    background:#14151a;
+    background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 2px,transparent 2px 32px),
+                     repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 2px,transparent 2px 32px);
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.pixel{font-family:"Press Start 2P",monospace;line-height:1.6;}
+  canvas{image-rendering:pixelated;}
+  section{padding:110px 24px 70px;max-width:1100px;margin:0 auto;position:relative;}
+
+  /* ---------- panels, slots, buttons: classic Minecraft GUI ---------- */
+  .panel{
+    background:var(--panel);
+    border:3px solid #000;
+    box-shadow:inset 0 0 0 2px var(--panel-border),
+               inset 0 0 0 5px #101013,
+               0 6px 0 #000;
+    padding:26px;
+  }
+  .slot{
+    background:var(--slot);
+    box-shadow:inset 3px 3px 0 var(--slot-dark),
+               inset -3px -3px 0 var(--slot-light),
+               inset 0 0 0 1px #000;
+    border-radius:2px;
+  }
+  .btn{
+    display:inline-block;
+    font-family:"Press Start 2P",monospace;
+    font-size:12px;
+    color:#fff;
+    text-decoration:none;
+    padding:14px 22px;
+    background:#5c9e41;
+    border:2px solid #000;
+    box-shadow:inset 0 0 0 2px #2f5e21, inset 0 4px 0 rgba(255,255,255,.25), 0 4px 0 #000;
+    cursor:pointer;
+    transition:filter .15s;
+  }
+  .btn:hover{filter:brightness(1.2);}
+  .btn:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #2f5e21, 0 2px 0 #000;}
+  .btn.gray{background:#6b6c74;}
+  .btn.gray{box-shadow:inset 0 0 0 2px #3b3c44, inset 0 4px 0 rgba(255,255,255,.25), 0 4px 0 #000;}
+
+  /* ---------- loading screen ---------- */
+  #loader{
+    position:fixed;inset:0;z-index:100;
+    background:#0c0d10;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+    transition:opacity .6s;
+  }
+  #loader.done{opacity:0;pointer-events:none;}
+  #loader .logo{font-size:14px;color:var(--gold);text-shadow:2px 2px 0 #000;}
+  #loader .loadbar{width:320px;height:20px;background:#17181c;border:2px solid #000;box-shadow:inset 2px 2px 0 #2b2c31;}
+  #loader .loadbar .fill{height:100%;width:0;background:var(--green-bar);box-shadow:inset 0 3px 0 rgba(255,255,255,.35);transition:width .12s steps(8);}
+  #loader .tip{font-size:18px;color:var(--text-dim);}
+
+  /* ---------- hotbar ---------- */
+  .hotbar{
+    position:fixed;top:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:7px;z-index:60;
+  }
+  .hotbar .slot{
+    width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+    font-size:26px;background:rgba(22,23,27,.9);cursor:pointer;position:relative;
+    filter:grayscale(1);transition:filter .2s;
+  }
+  .hotbar .slot:hover{filter:grayscale(0) brightness(1.1);}
+  .hotbar .slot.active{filter:grayscale(0);}
+  .hotbar .slot.active::after{
+    content:"";position:absolute;inset:-4px;border:3px solid #fff;pointer-events:none;
+  }
+  .hotbar .slot .num{
+    position:absolute;top:3px;left:5px;font-family:"Press Start 2P",monospace;
+    font-size:8px;color:#fff;opacity:.75;text-shadow:1px 1px 0 #000;
+  }
+  .daynight{
+    position:fixed;top:14px;right:16px;z-index:60;
+    width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+    font-size:24px;cursor:pointer;background:rgba(22,23,27,.9);
+  }
+
+  /* ---------- hero ---------- */
+  #hero{
+    max-width:none;padding:0;min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(var(--sky-top),var(--sky-bottom) 78%);
+    transition:background 1.2s;
+    position:relative;overflow:hidden;
+  }
+  body.night #hero{background:linear-gradient(#0a0f24,#232a4c 78%);}
+  #terrain{position:absolute;inset:0;pointer-events:none;}
+  #hero .hero-content{position:relative;z-index:3;text-align:center;padding:0 20px;}
+  #hero h1{font-size:38px;color:#fff;text-shadow:4px 4px 0 #000;margin:22px 0;}
+  #hero .tagline{color:var(--gold);font-size:15px;text-shadow:2px 2px 0 #000;}
+  #hero .sub{font-size:24px;color:#2a2a33;margin:18px 0 34px;}
+  body.night #hero .sub{color:#d7d7de;}
+  #hero .ctas{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;}
+  .scroll-hint{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+    color:#000;opacity:.55;font-size:18px;animation:blink 1.2s steps(2) infinite;
+  }
+  @keyframes blink{50%{opacity:.15}}
+  .cube{position:absolute;width:44px;height:44px;transform-style:preserve-3d;animation:spin 9s linear infinite;pointer-events:none;}
+  .cube .face{position:absolute;width:44px;height:44px;background:var(--grass);box-shadow:inset 0 0 0 3px rgba(0,0,0,.35);}
+  .cube .face.top{transform:rotateX(90deg) translateZ(22px);background:var(--grass2);}
+  .cube .face.bottom{transform:rotateX(-90deg) translateZ(22px);background:var(--stone);}
+  .cube .face.front{transform:translateZ(22px);background:var(--dirt);}
+  .cube .face.back{transform:rotateY(180deg) translateZ(22px);background:var(--dirt);}
+  .cube .face.left{transform:rotateY(-90deg) translateZ(22px);background:var(--stone);}
+  .cube .face.right{transform:rotateY(90deg) translateZ(22px);background:var(--stone);}
+  @keyframes spin{to{transform:rotateX(-25deg) rotateY(360deg)}}
+  .cube.c2{width:30px;height:30px;animation-duration:13s;animation-direction:reverse;}
+  .cube.c2 .face,.cube.c2 .face.top,.cube.c2 .face.bottom,.cube.c2 .face.front,.cube.c2 .face.back,.cube.c2 .face.left,.cube.c2 .face.right{width:30px;height:30px;}
+  .cube.c2 .face.top{transform:rotateX(90deg) translateZ(15px);}
+  .cube.c2 .face.bottom{transform:rotateX(-90deg) translateZ(15px);}
+  .cube.c2 .face.front{transform:translateZ(15px);}
+  .cube.c2 .face.back{transform:rotateY(180deg) translateZ(15px);}
+  .cube.c2 .face.left{transform:rotateY(-90deg) translateZ(15px);}
+  .cube.c2 .face.right{transform:rotateY(90deg) translateZ(15px);}
+
+  /* ---------- section headings ---------- */
+  .sec-title{color:var(--gold);font-size:20px;text-shadow:3px 3px 0 #000;margin-bottom:34px;}
+  .sec-title small{display:block;font-size:10px;color:var(--text-dim);margin-top:10px;}
+
+  /* ---------- player card ---------- */
+  #about .grid{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;}
+  .playercard{flex:0 0 260px;text-align:center;}
+  .sprite-wrap{position:relative;margin:0 auto 12px;}
+  .sprite{position:absolute;top:0;left:0;background:transparent;}
+  .hearts{display:flex;justify-content:center;gap:6px;margin:16px 0 4px;}
+  .hearts .sprite-wrap{width:31px;height:28px;}
+  .xpwrap{width:100%;margin-top:16px;}
+  .xpbar{height:22px;background:#17181c;border:2px solid #000;box-shadow:inset 2px 2px 0 #2b2c31;position:relative;}
+  .xpbar .fill{height:100%;background:var(--green-bar);box-shadow:inset 0 4px 0 rgba(255,255,255,.3);width:0;transition:width 1.6s steps(20);}
+  .xpbar .lvl{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:"Press Start 2P",monospace;font-size:10px;color:var(--gold);text-shadow:2px 2px 0 #000;}
+  .about-text{flex:1;min-width:300px;}
+  .about-text p{font-size:21px;line-height:1.5;color:var(--text);}
+  .about-text p.dim{color:var(--text-dim);}
+  .statbars{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;margin-top:28px;}
+  .statbar .label{display:flex;justify-content:space-between;font-size:17px;color:var(--text-dim);}
+  .statbar .bar{height:14px;background:#17181c;border:2px solid #000;box-shadow:inset 2px 2px 0 #2b2c31;margin-top:4px;}
+  .statbar .bar i{display:block;height:100%;width:0;background:var(--gold);box-shadow:inset 0 3px 0 rgba(255,255,255,.35);transition:width 1.4s steps(15);}
+
+  /* ---------- inventory ---------- */
+  .invgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;}
+  .invslot{width:100%;height:96px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;cursor:pointer;}
+  .invslot .lvl{position:absolute;bottom:6px;right:7px;font-family:"Press Start 2P",monospace;font-size:8px;color:#fff;text-shadow:1px 1px 0 #000;}
+  .invslot:hover{filter:brightness(1.15);}
+  .invslot.enchanted{box-shadow:inset 3px 3px 0 var(--slot-dark),inset -3px -3px 0 var(--slot-light),inset 0 0 0 1px #000, inset 0 0 14px rgba(167,138,224,.55);}
+
+  /* ---------- projects ---------- */
+  .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+  .proj{padding:22px;position:relative;}
+  .proj .icon{font-size:46px;}
+  .proj .name{color:var(--gold);font-family:"Press Start 2P",monospace;font-size:12px;margin:14px 0 10px;}
+  .proj .meta{color:var(--purple);font-size:16px;margin-bottom:10px;}
+  .proj .desc{font-size:20px;color:var(--text);line-height:1.45;}
+  .proj .link{display:inline-block;margin-top:14px;color:var(--diamond);text-decoration:none;font-size:18px;}
+  .proj .link:hover{filter:brightness(1.3);}
+
+  /* ---------- quest log ---------- */
+  .quest{display:flex;gap:18px;align-items:center;padding:18px 22px;margin-bottom:12px;}
+  .quest .status{font-size:34px;}
+  .quest .qname{color:#fff;font-size:21px;}
+  .quest .qreward{color:var(--green-bar);font-size:17px;margin-top:4px;}
+  .quest .qstate{margin-left:auto;font-size:15px;font-family:"Press Start 2P",monospace;}
+  .qstate.done{color:var(--green-bar);}
+  .qstate.prog{color:var(--gold);}
+
+  /* ---------- journal / timeline ---------- */
+  .timeline{border-left:4px solid var(--dirt);margin:20px 0 0 10px;padding-left:26px;}
+  .timeline .entry{position:relative;margin-bottom:30px;}
+  .timeline .entry::before{content:"";position:absolute;left:-34px;top:6px;width:12px;height:12px;background:var(--gold);border:2px solid #000;}
+  .timeline .years{color:var(--text-dim);font-size:16px;}
+  .timeline .role{color:#fff;font-size:22px;margin:2px 0 6px;}
+  .timeline .what{font-size:19px;color:var(--text-dim);}
+
+  /* ---------- chat ---------- */
+  #chat .chatwin{height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;font-size:19px;padding:14px;background:#101014;box-shadow:inset 0 0 0 2px #2b2c31;}
+  #chat .npc{color:var(--gold);}
+  #chat .player{color:#fff;}
+  #chat input{
+    width:100%;margin-top:16px;padding:12px;font-family:"VT323",monospace;font-size:20px;
+    color:#fff;background:#17181c;border:2px solid #000;box-shadow:inset 2px 2px 0 #2b2c31;outline:none;
+  }
+  #chat .links{display:flex;gap:14px;flex-wrap:wrap;margin-top:22px;}
+  #chat .links a{text-decoration:none;}
+
+  /* ---------- tooltip ---------- */
+  #tooltip{
+    position:fixed;z-index:90;pointer-events:none;display:none;max-width:300px;
+    background:rgba(18,18,24,.95);border:2px solid #000;
+    box-shadow:inset 0 0 0 1px #3a3b41, 4px 4px 0 rgba(0,0,0,.5);
+    padding:10px 12px;font-size:17px;line-height:1.4;
+  }
+  #tooltip .t-name{color:var(--gold);font-family:"Press Start 2P",monospace;font-size:10px;}
+  #tooltip .t-meta{color:var(--purple);font-size:15px;margin:4px 0;}
+  #tooltip .t-desc{color:var(--text-dim);}
+
+  /* ---------- achievement toast ---------- */
+  #toast{
+    position:fixed;top:76px;right:16px;z-index:80;width:280px;
+    background:#2e2b1c;border:2px solid #000;box-shadow:inset 0 0 0 2px #7a6b30, 4px 4px 0 rgba(0,0,0,.5);
+    padding:14px 16px;display:flex;gap:12px;align-items:center;
+    transform:translateX(320px);transition:transform .45s cubic-bezier(.2,.9,.3,1.2);
+  }
+  #toast.show{transform:translateX(0);}
+  #toast .t-ico{font-size:30px;}
+  #toast .t-ach{color:#fff;font-size:13px;}
+  #toast .t-goal{color:var(--text-dim);font-size:12px;}
+
+  /* ---------- debug overlay ---------- */
+  #debug{
+    position:fixed;top:74px;left:14px;z-index:80;display:none;
+    font-family:"VT323",monospace;font-size:16px;color:#2bd2ff;line-height:1.5;
+    background:rgba(0,0,0,.35);padding:6px 10px;pointer-events:none;
+  }
+
+  /* ---------- click particles ---------- */
+  .particle{position:fixed;width:10px;height:10px;z-index:95;pointer-events:none;animation:fall .9s linear forwards;}
+  @keyframes fall{to{transform:translateY(90px) rotate(45deg);opacity:0;}}
+
+  footer{
+    text-align:center;padding:40px 20px;color:var(--text-dim);font-size:16px;
+    border-top:3px solid #000;
+  }
+  footer .seed{color:var(--gold);}
+  @media (max-width:640px){
+    #hero h1{font-size:22px;}
+    .statbars{grid-template-columns:1fr;}
+    .hotbar .slot{width:44px;height:44px;font-size:20px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    .cube{animation:none;}
+    .scroll-hint{animation:none;}
+  }
+</style>
 </head>
 <body>
 
-<div class="debug" aria-hidden="true">astuning.dev &bull; v1.21 &bull; <span id="fps">60</span> fps</div>
+<div id="loader">
+  <div class="logo pixel">CRAFTING YOUR EXPERIENCE&hellip;</div>
+  <div class="loadbar"><div class="fill" id="loadfill"></div></div>
+  <div class="tip" id="loadtip">Tip: I ship code, not excuses.</div>
+</div>
 
-<header class="hero" id="home">
-  <canvas id="voxel" aria-hidden="true"></canvas>
-  <div class="hero-content">
-    <div class="badge">LVL 42 SOFTWARE ARTISAN</div>
-    <h1>astuning</h1>
-    <p class="tagline">I craft software the way I craft worlds &mdash; block by block,<br>redstone by redstone, commit by commit.</p>
-    <div class="hero-buttons">
-      <a class="mc-btn" href="#projects">View Projects</a>
-      <a class="mc-btn mc-btn--ghost" href="#contact">Send a Message</a>
-    </div>
+<div class="hotbar" id="hotbar"></div>
+<div class="daynight slot" id="daynight" title="Toggle day / night">&#9728;</div>
+
+<div id="toast">
+  <div class="t-ico">&#127942;</div>
+  <div>
+    <div class="t-ach pixel">Achievement Made!</div>
+    <div class="t-goal" id="toastname">Exploring the Bio</div>
   </div>
-  <div class="scroll-hint" aria-hidden="true">scroll down v</div>
-</header>
+</div>
+
+<div id="debug"></div>
+<div id="tooltip"></div>
 
 <main>
-
-<section id="about" class="section">
-  <h2 class="section-title"><span class="cube cube--grass"></span>About the dev</h2>
-  <div class="player-card reveal">
-    <canvas id="avatar" width="8" height="8" aria-label="Pixel avatar of astuning"></canvas>
-    <div class="player-info">
-      <h3>astuning</h3>
-      <p class="player-class">Class: Redstone Engineer / Full-Stack Wizard</p>
-      <p class="player-bio">
-        Hi &mdash; I'm a developer who treats codebases like terrain: generate it procedurally where
-        you can, build by hand where it matters, and always leave the world better than you found it.
-        I like small tools, fast feedback loops, and interfaces that feel like you can pick them up
-        and place them somewhere.
-      </p>
-      <ul class="stats">
-        <li><span>Commits mined</span><b>12,480</b></li>
-        <li><span>Bugs slain</span><b>9,001</b></li>
-        <li><span>Coffee consumed</span><b>1,337 buckets</b></li>
-        <li><span>Worlds generated</span><b>14</b></li>
-        <li><span>Uptime kept</span><b>99.98%</b></li>
-      </ul>
+  <!-- ================= HERO ================= -->
+  <section id="hero" data-ach="Spawning In">
+    <canvas id="terrain"></canvas>
+    <div class="cube c1" style="top:14%;left:9%;"><div class="face top"></div><div class="face bottom"></div><div class="face front"></div><div class="face back"></div><div class="face left"></div><div class="face right"></div></div>
+    <div class="cube c2" style="top:22%;right:12%;"><div class="face top"></div><div class="face bottom"></div><div class="face front"></div><div class="face back"></div><div class="face left"></div><div class="face right"></div></div>
+    <div class="cube c2" style="bottom:24%;left:14%;"><div class="face top"></div><div class="face bottom"></div><div class="face front"></div><div class="face back"></div><div class="face left"></div><div class="face right"></div></div>
+    <div class="hero-content">
+      <div class="tagline pixel">&#9670; FULL-STACK DEVELOPER &#9670;</div>
+      <h1>ALEX CARTER</h1>
+      <div class="sub">I build software one block at a time.</div>
+      <div class="ctas">
+        <a class="btn" href="#about">&#9654; Start Game</a>
+        <a class="btn gray" href="#skills">&#128230; Open Inventory</a>
+      </div>
     </div>
-  </div>
-  <div class="achievements">
-    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>First Hello World</span></div>
-    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>Open Source Contributor</span></div>
-    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>10k Commits</span></div>
-    <div class="achievement reveal"><strong>Achievement gotten!</strong><span>Home Lab Herder</span></div>
-  </div>
-</section>
+    <div class="scroll-hint">&#8595; press S to descend</div>
+  </section>
 
-<section id="skills" class="section">
-  <h2 class="section-title"><span class="cube cube--diamond"></span>Inventory</h2>
-  <div class="inventory">
-    <div class="slot-item reveal" data-name="TypeScript &mdash; LVL 9"><div class="item item--ts">TS</div><span class="item-name">TypeScript</span><div class="xp"><i style="--xp:90%"></i></div></div>
-    <div class="slot-item reveal" data-name="Git &mdash; LVL 9"><div class="item item--git">GIT</div><span class="item-name">Git</span><div class="xp"><i style="--xp:90%"></i></div></div>
-    <div class="slot-item reveal" data-name="Rust &mdash; LVL 8"><div class="item item--rust">RS</div><span class="item-name">Rust</span><div class="xp"><i style="--xp:80%"></i></div></div>
-    <div class="slot-item reveal" data-name="Python &mdash; LVL 8"><div class="item item--py">PY</div><span class="item-name">Python</span><div class="xp"><i style="--xp:80%"></i></div></div>
-    <div class="slot-item reveal" data-name="Linux &mdash; LVL 8"><div class="item item--linux">:(){</div><span class="item-name">Linux</span><div class="xp"><i style="--xp:80%"></i></div></div>
-    <div class="slot-item reveal" data-name="Go &mdash; LVL 7"><div class="item item--go">GO</div><span class="item-name">Go</span><div class="xp"><i style="--xp:70%"></i></div></div>
-    <div class="slot-item reveal" data-name="Docker &mdash; LVL 7"><div class="item item--docker">DKR</div><span class="item-name">Docker</span><div class="xp"><i style="--xp:70%"></i></div></div>
-    <div class="slot-item reveal" data-name="SQL &mdash; LVL 6"><div class="item item--sql">SQL</div><span class="item-name">SQL</span><div class="xp"><i style="--xp:60%"></i></div></div>
-  </div>
-</section>
-
-<section id="projects" class="section">
-  <h2 class="section-title"><span class="cube cube--tnt"></span>Projects</h2>
-  <div class="projects">
-    <article class="block-card reveal">
-      <div class="block-top"></div>
-      <h3>Chunk Engine</h3>
-      <p class="lore">Procedural terrain generator</p>
-      <p class="desc">A Rust + WASM terrain engine that streams infinite voxel chunks at 60 fps in the browser. Noise pipelines, greedy meshing, zero allocations per frame.</p>
-      <div class="tags"><span>rust</span><span>wasm</span><span>webgl</span></div>
-      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
-    </article>
-    <article class="block-card reveal">
-      <div class="block-top"></div>
-      <h3>Redstone CLI</h3>
-      <p class="lore">Build pipelines you can see</p>
-      <p class="desc">A task runner that renders your build graph as a live circuit diagram. Watch targets fire, cache, and propagate like signal through wire.</p>
-      <div class="tags"><span>go</span><span>cli</span><span>tui</span></div>
-      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
-    </article>
-    <article class="block-card reveal">
-      <div class="block-top"></div>
-      <h3>Nether Net</h3>
-      <p class="lore">Home-lab network dashboard</p>
-      <p class="desc">Self-hosted mesh overview for my homelab: nodes as portals, traffic as particles, alerts as chunk borders. Runs on a single Raspberry Pi.</p>
-      <div class="tags"><span>typescript</span><span>self-hosted</span></div>
-      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
-    </article>
-    <article class="block-card reveal">
-      <div class="block-top"></div>
-      <h3>Voxel Vault</h3>
-      <p class="lore">E2E-encrypted notes</p>
-      <p class="desc">Notes stored as blocks, synced as chunks, encrypted client-side. The UI is deliberately blocky: every note is a placeable, stackable item.</p>
-      <div class="tags"><span>rust</span><span>sqlite</span><span>e2ee</span></div>
-      <a class="mc-btn mc-btn--small" href="#">Spawn</a>
-    </article>
-  </div>
-</section>
-
-<section id="contact" class="section">
-  <h2 class="section-title"><span class="cube cube--gold"></span>Place a sign</h2>
-  <div class="sign reveal">
-    <p>Open to collabs, open source, and odd ideas. Right-click to write.</p>
-    <a class="mc-btn" href="mailto:hello@astuning.dev">hello@astuning.dev</a>
-    <div class="socials">
-      <a href="#">github.com/astuning</a>
-      <a href="#">discord &middot; astuning</a>
-      <a href="#">rss feed</a>
+  <!-- ================= ABOUT ================= -->
+  <section id="about" data-ach="Reading the Bio">
+    <h2 class="sec-title pixel">&#9670; The Player<small>&#167; the human behind the character</small></h2>
+    <div class="panel">
+      <div class="grid">
+        <div class="playercard">
+          <div class="sprite-wrap" id="face" style="width:56px;height:56px;"></div>
+          <div class="pixel" style="font-size:10px;color:#fff;margin-top:10px;">alex_carter</div>
+          <div class="hearts" id="hearts"></div>
+          <div class="xpwrap">
+            <div class="xpbar"><div class="fill" data-w="62"></div><div class="lvl">LV 14</div></div>
+            <div style="font-size:15px;color:var(--text-dim);margin-top:6px;">62% toward Level 15</div>
+          </div>
+        </div>
+        <div class="about-text">
+          <p>&gt; Hey. I'm Alex &mdash; a full-stack developer who builds software the way you build a world:
+          chunk by chunk, block by block, with a map of where everything goes.</p>
+          <p>&gt; I like systems that are fast, interfaces that are honest, and tooling that makes a team
+          more creative. Currently Senior Frontend at <b>Mineforge</b>, where I work on WebGL rendering
+          pipelines, design systems, and the kind of UI that feels like a game.</p>
+          <p class="dim">&gt; Off the keyboard: pixel art, speedrunning, rock climbing, and maintaining
+          a blocky cabin that is 100% not made of blocks.</p>
+          <div class="statbars">
+            <div class="statbar"><div class="label"><span>TypeScript</span><span>94</span></div><div class="bar"><i data-w="94"></i></div></div>
+            <div class="statbar"><div class="label"><span>JavaScript</span><span>96</span></div><div class="bar"><i data-w="96"></i></div></div>
+            <div class="statbar"><div class="label"><span>React / Svelte</span><span>88</span></div><div class="bar"><i data-w="88"></i></div></div>
+            <div class="statbar"><div class="label"><span>Node.js</span><span>85</span></div><div class="bar"><i data-w="85"></i></div></div>
+            <div class="statbar"><div class="label"><span>Go</span><span>62</span></div><div class="bar"><i data-w="62"></i></div></div>
+            <div class="statbar"><div class="label"><span>Rust</span><span>44</span></div><div class="bar"><i data-w="44"></i></div></div>
+            <div class="statbar"><div class="label"><span>Postgres</span><span>78</span></div><div class="bar"><i data-w="78"></i></div></div>
+            <div class="statbar"><div class="label"><span>Docker / K8s</span><span>70</span></div><div class="bar"><i data-w="70"></i></div></div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
+  <!-- ================= SKILLS ================= -->
+  <section id="skills" data-ach="Inspecting the Inventory">
+    <h2 class="sec-title pixel">&#9670; Inventory<small>&#167; hover an item to inspect it. enchanted items = battle-tested</small></h2>
+    <div class="invgrid" id="invgrid"></div>
+  </section>
+
+  <!-- ================= PROJECTS ================= -->
+  <section id="projects" data-ach="Reviewing the Build Log">
+    <h2 class="sec-title pixel">&#9670; Crafting Table<small>&#167; recipes I have crafted and open-sourced</small></h2>
+    <div class="projgrid">
+      <div class="proj panel tip" data-name="VoxelEngine" data-meta="TypeScript · WebGL2 · WASM" data-desc="A voxel renderer that draws 1M blocks at 60fps in the browser. Greedy meshing, ambient occlusion, and a chunk streaming system. No framework, no mercy." data-type="netherite">
+        <div class="icon">&#9935;</div>
+        <div class="name">VOXELENGINE</div>
+        <div class="meta">TypeScript · WebGL2 · WASM</div>
+        <div class="desc">Renders 1M blocks at 60 fps in the browser. Greedy meshing, AO shading, chunk streaming.</div>
+        <a class="link" href="#projects">view recipe &#8594;</a>
+      </div>
+      <div class="proj panel tip" data-name="Redstone" data-meta="Node.js · Redis · BullMQ" data-desc="Workflow automation engine where jobs are wired like redstone circuits: triggers, delays, observers, and a visual editor." data-type="diamond">
+        <div class="icon">&#128302;</div>
+        <div class="name">REDSTONE</div>
+        <div class="meta">Node.js · Redis · BullMQ</div>
+        <div class="desc">Workflow automation where jobs are wired like circuits: triggers, delays, observers.</div>
+        <a class="link" href="#projects">view recipe &#8594;</a>
+      </div>
+      <div class="proj panel tip" data-name="PixelForge" data-meta="Svelte · Canvas · WebCodecs" data-desc="Pixel art editor in the browser. Onion-skinning, palette dithering, GIF export. 38k stars and counting." data-type="gold">
+        <div class="icon">&#128303;</div>
+        <div class="name">PIXELFORGE</div>
+        <div class="meta">Svelte · Canvas · WebCodecs</div>
+        <div class="desc">Pixel art editor in the browser. Onion-skinning, palette dithering, GIF export. 38k&#9733;.</div>
+        <a class="link" href="#projects">view recipe &#8594;</a>
+      </div>
+      <div class="proj panel tip" data-name="Chunked" data-meta="Go · gRPC · etcd" data-desc="A distributed job queue built for game backends: tick-aware scheduling, region sharding, and crash-safe workers." data-type="iron">
+        <div class="icon">&#128737;</div>
+        <div class="name">CHUNKED</div>
+        <div class="meta">Go · gRPC · etcd</div>
+        <div class="desc">A distributed job queue for game backends: tick-aware scheduling, region sharding.</div>
+        <a class="link" href="#projects">view recipe &#8594;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPERIENCE ================= -->
+  <section id="exp" data-ach="Reading the Quest Log">
+    <h2 class="sec-title pixel">&#9670; Quest Log<small>&#167; quests accepted, quests completed</small></h2>
+    <div class="panel">
+      <div class="quest slot" style="background:var(--slot);">
+        <div class="status">&#9876;</div>
+        <div>
+          <div class="qname">&gt; Lead the frontend platform team at Mineforge</div>
+          <div class="qreward">+250 XP · reward: Design System v3 shipped</div>
+        </div>
+        <div class="qstate done">&#10004; COMPLETE</div>
+      </div>
+      <div class="quest slot">
+        <div class="status">&#128295;</div>
+        <div>
+          <div class="qname">&gt; Ship the voxel renderer for Mineforge Worlds</div>
+          <div class="qreward">+400 XP · in progress</div>
+        </div>
+        <div class="qstate prog">&#9203; ACTIVE</div>
+      </div>
+      <div class="quest slot">
+        <div class="status">&#129518;</div>
+        <div>
+          <div class="qname">&gt; Migrate Blockworks to Kubernetes, zero downtime</div>
+          <div class="qreward">+180 XP · reward: p99 latency &darr; 40%</div>
+        </div>
+        <div class="qstate done">&#10004; COMPLETE</div>
+      </div>
+      <div class="quest slot">
+        <div class="status">&#128218;</div>
+        <div>
+          <div class="qname">&gt; Open-source 12 libraries (10/12 done)</div>
+          <div class="qreward">+120 XP · repeatable: one library per season</div>
+        </div>
+        <div class="qstate prog">&#9203; ACTIVE</div>
+      </div>
+    </div>
+
+    <h2 class="sec-title pixel" style="margin-top:56px;">&#9670; Journal<small>&#167; where the XP came from</small></h2>
+    <div class="timeline">
+      <div class="entry">
+        <div class="years">2021 &mdash; present</div>
+        <div class="role">Senior Frontend Engineer, Mineforge</div>
+        <div class="what">Rendering pipeline, design system, WebGL. Leading a team of 5. Shipped the world editor used by 400k builders.</div>
+      </div>
+      <div class="entry">
+        <div class="years">2019 &mdash; 2021</div>
+        <div class="role">Backend Engineer, Blockworks</div>
+        <div class="what">Go services for multiplayer state sync. Cut match-join latency from 2.1s to 300ms.</div>
+      </div>
+      <div class="entry">
+        <div class="years">2017 &mdash; 2019</div>
+        <div class="role">Freelance Developer</div>
+        <div class="what">26 small games, 3 launch sites, 1 very loud launch party.</div>
+      </div>
+      <div class="entry">
+        <div class="years">2013 &mdash; 2017</div>
+        <div class="role">B.Sc. Computer Science</div>
+        <div class="what">Graphics, compilers, and an unreasonable amount of time in a voxel sandbox.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" data-ach="Contacting the Villager">
+    <h2 class="sec-title pixel">&#9670; Chat<small>&#167; talk to the developer. trades accepted</small></h2>
+    <div class="panel" id="chat">
+      <div class="chatwin" id="chatwin"></div>
+      <input id="chatinput" placeholder="type a message&hellip; (press Enter to send)" />
+      <div class="links">
+        <a class="btn gray" href="mailto:alex@alexcarter.dev">&#9993; Email Me</a>
+        <a class="btn gray" href="#contact">&#128269; GitHub</a>
+        <a class="btn gray" href="#contact">&#128188; LinkedIn</a>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
-  <div class="dirt-strip" aria-hidden="true"></div>
-  <p>&copy; 2026 astuning &mdash; built with blocks, not frameworks. Not affiliated with Mojang.</p>
+  &copy; 2026 Alex Carter &middot; built in vanilla HTML/CSS/JS, no mods
+  &middot; <span class="seed">Seed: minecraft</span> &middot; version v1.20.4
+  &middot; not affiliated with Mojang
 </footer>
 
-<nav class="hotbar" aria-label="Site sections">
-  <a href="#home" class="slot active"><span class="slot-num">1</span><span class="slot-label">Home</span></a>
-  <a href="#about" class="slot"><span class="slot-num">2</span><span class="slot-label">About</span></a>
-  <a href="#skills" class="slot"><span class="slot-num">3</span><span class="slot-label">Skills</span></a>
-  <a href="#projects" class="slot"><span class="slot-num">4</span><span class="slot-label">Work</span></a>
-  <a href="#contact" class="slot"><span class="slot-num">5</span><span class="slot-label">Chat</span></a>
-</nav>
+<script>
+(function(){
+  "use strict";
 
-<script src="script.js"></script>
+  /* ============ pixel sprite builder ============ */
+  function sprite(rows, palette, scale){
+    var el = document.createElement("div");
+    el.className = "sprite";
+    var sh = [];
+    rows.forEach(function(row, y){
+      for(var x=0; x<row.length; x++){
+        var ch = row[x];
+        if(ch !== "." && palette[ch]){
+          sh.push((x*scale)+"px "+(y*scale)+"px 0 "+palette[ch]);
+        }
+      }
+    });
+    el.style.width = scale+"px";
+    el.style.height = scale+"px";
+    el.style.boxShadow = sh.join(",");
+    return el;
+  }
+
+  var FACE = [
+    "HHHHHHHH",
+    "HHSSSSHH",
+    "HSEESSEH",
+    "HSSSSSSH",
+    "HSMSSMSH",
+    "HSSSSSSH",
+    "HHMMMMHH",
+    "HHMMMMHH"
+  ];
+  var facePal = { H:"#3b2f24", S:"#c68e56", E:"#4a3d8f", M:"#6b4a2b" };
+  var faceWrap = document.getElementById("face");
+  faceWrap.appendChild(sprite(FACE, facePal, 7));
+
+  var HEART = ["..X.X..",".XXXXX.","XXXXXXX","XXXXXXX",".XXXXX.","..XXX.."];
+  function heart(full){
+    var w = document.createElement("div");
+    w.className = "sprite-wrap";
+    w.appendChild(sprite(HEART, { X: full ? "#d03131" : "#3a3b41" }, 4));
+    return w;
+  }
+  var heartsEl = document.getElementById("hearts");
+  var hp = 8; // 8 full, 2 half
+  for(var i=0;i<10;i++){
+    var full = i < hp;
+    heartsEl.appendChild(heart(full));
+  }
+
+  /* ============ loader ============ */
+  var tips = [
+    "Tip: I ship code, not excuses.",
+    "Tip: Premature optimization is the root of all redstone.",
+    "Tip: A bug in production costs 1 diamond. In staging: 1 emerald.",
+    "Tip: The best abstraction is the one you never needed.",
+    "Tip: Read the changelog before the README."
+  ];
+  var loadfill = document.getElementById("loadfill");
+  var loadtip = document.getElementById("loadtip");
+  var loaderEl = document.getElementById("loader");
+  var pct = 0;
+  var loadTimer = setInterval(function(){
+    pct = Math.min(100, pct + 4 + Math.random()*9);
+    loadfill.style.width = pct+"%";
+    if(pct % 33 < 12){
+      loadtip.textContent = tips[Math.floor(Math.random()*tips.length)];
+    }
+    if(pct >= 100){
+      clearInterval(loadTimer);
+      setTimeout(function(){ loaderEl.classList.add("done"); }, 500);
+    }
+  }, 180);
+  // safety: never keep loader past 4s
+  setTimeout(function(){ loaderEl.classList.add("done"); }, 4000);
+
+  /* ============ hotbar ============ */
+  var sections = [
+    { id:"hero",     icon:"\u{1F5FA}\u{FE0F}" },
+    { id:"about",    icon:"\u{1F9D1}\u{FE0F}" },
+    { id:"skills",   icon:"\u{2694}\u{FE0F}" },
+    { id:"projects", icon:"\u{1F9EA}" },
+    { id:"exp",      icon:"\u{1F4DC}" },
+    { id:"contact",  icon:"\u{1F4AC}" }
+  ];
+  var hotbar = document.getElementById("hotbar");
+  var slotEls = [];
+  sections.forEach(function(s, i){
+    var slot = document.createElement("div");
+    slot.className = "slot";
+    slot.title = s.id;
+    slot.innerHTML = '<span class="num">'+(i+1)+'</span>'+s.icon;
+    slot.addEventListener("click", function(){
+      document.getElementById(s.id).scrollIntoView({ behavior:"smooth" });
+    });
+    hotbar.appendChild(slot);
+    slotEls.push(slot);
+  });
+  for(var e=6; e<9; e++){
+    var empty = document.createElement("div");
+    empty.className = "slot";
+    empty.innerHTML = '<span class="num">'+(e+1)+'</span>';
+    hotbar.appendChild(empty);
+  }
+
+  document.addEventListener("keydown", function(ev){
+    if(ev.key >= "1" && ev.key <= "6"){
+      var idx = parseInt(ev.key, 10) - 1;
+      document.getElementById(sections[idx].id).scrollIntoView({ behavior:"smooth" });
+    }
+    if(ev.key === "F3"){
+      ev.preventDefault();
+      var d = document.getElementById("debug");
+      d.style.display = d.style.display === "block" ? "none" : "block";
+    }
+  });
+
+  /* ============ scroll spy ============ */
+  var activeIdx = 0;
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var idx = sections.findIndex(function(s){ return s.id === entry.target.id; });
+        if(idx >= 0){
+          slotEls.forEach(function(s){ s.classList.remove("active"); });
+          slotEls[idx].classList.add("active");
+          activeIdx = idx;
+        }
+      }
+    });
+  }, { threshold: 0.35 });
+  sections.forEach(function(s){
+    spy.observe(document.getElementById(s.id));
+  });
+
+  /* ============ achievements ============ */
+  var toastEl = document.getElementById("toast");
+  var toastName = document.getElementById("toastname");
+  var toastTimer = null;
+  var seenAch = {};
+  function toast(name){
+    toastName.textContent = name;
+    toastEl.classList.add("show");
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 3200);
+  }
+  var ach = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      var name = entry.target.getAttribute("data-ach");
+      if(entry.isIntersecting && !seenAch[name] && name !== "Spawning In"){
+        seenAch[name] = true;
+        toast(name);
+      }
+    });
+  }, { threshold: 0.35 });
+  document.querySelectorAll("section[data-ach]").forEach(function(s){
+    ach.observe(s);
+  });
+
+  /* ============ animated bars ============ */
+  var barObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.querySelectorAll("[data-w]").forEach(function(el){
+          el.style.width = el.getAttribute("data-w")+"%";
+        });
+        barObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll("#about, #skills").forEach(function(s){ barObs.observe(s); });
+
+  /* ============ inventory ============ */
+  var items = [
+    { i:"\u{1F6E1}\u{FE0F}", n:"TypeScript",  l:42, e:1, d:"Typed, strict, and it never lets me drop a brick. Everyday pickaxe." },
+    { i:"\u{1F5E1}\u{FE0F}", n:"JavaScript",  l:45, e:1, d:"The sword that always swings. Unpredictable crits included." },
+    { i:"\u{1F6E1}\u{FE0F}", n:"React",       l:38, e:1, d:"Defensive shield of component state. Hooks are the enchantment." },
+    { i:"\u{1F9EA}",        n:"Node.js",     l:36, e:1, d:"Brewing stand for backend potions: streams, workers, and servers." },
+    { i:"\u{1F3F9}",        n:"Go",          l:27, e:0, d:"Simple bow, reliable range. Concurrency is the power shot." },
+    { i:"\u{1F9CA}",        n:"Python",      l:30, e:0, d:"Ice cube of languages: melts into anything (scripts, ML, glue)." },
+    { i:"\u{1F4A7}",        n:"Postgres",    l:25, e:0, d:"Water you can trust. ACID-compliant, indexed, deep." },
+    { i:"\u{1FAB5}",        n:"Docker",      l:20, e:0, d:"Crafts a container that carries your app to any biome." },
+    { i:"\u{1F4DA}",        n:"AWS",         l:16, e:0, d:"The End dimension: vast, expensive, occasionally hostile." },
+    { i:"\u{26A1}",         n:"WebGL",       l:14, e:1, d:"Lightning bolt of raw GPU power. Shader syntax is the incantation." },
+    { i:"\u{1F525}",        n:"Rust",        l:12, e:0, d:"Fire that refuses to burn you. Borrow checker included free." },
+    { i:"\u{1F9F1}",        n:"CSS",         l:33, e:0, d:"Building blocks. Centering a div is the final boss." },
+    { i:"\u{1F52E}",        n:"GraphQL",     l:15, e:0, d:"Enchanted book: you get exactly the fields you asked for." },
+    { i:"\u{1F4DC}",        n:"Git",         l:28, e:0, d:"Save/Load system for code. Rebase = time travel, use wisely." },
+    { i:"\u{2728}",         n:"Svelte",      l:15, e:0, d:"Sparkles: compiles away the framework. Ships fast and small." },
+    { i:"\u{1F5DC}",        n:"Vite",        l:19, e:0, d:"Ender chest of build tooling. Opens instantly." },
+    { i:"\u{1F3A8}",        n:"Figma",       l:12, e:0, d:"Map art: sketch the world before you place a single block." },
+    { i:"\u{1F9F0}",        n:"CI/CD",       l:17, e:0, d:"Redstone clock: every push, tested and deployed automatically." },
+    { i:"\u{1FAB2}",        n:"Debugging",   l:21, e:1, d:"Finding the mob in the walls. Binary search torches." },
+    { i:"\u{1F9ED}",        n:"System Design", l:19, e:0, d:"Compass: points toward scale, not complexity." }
+  ];
+  var inv = document.getElementById("invgrid");
+  items.forEach(function(it){
+    var slot = document.createElement("div");
+    slot.className = "invslot slot tip" + (it.e ? " enchanted" : "");
+    slot.innerHTML = it.i + '<span class="lvl">L'+it.l+'</span>';
+    slot.setAttribute("data-name", it.n);
+    slot.setAttribute("data-meta", "Level "+it.l + (it.e ? " \u00b7 Enchanted" : " \u00b7 Unenchanted"));
+    slot.setAttribute("data-desc", it.d);
+    inv.appendChild(slot);
+  });
+
+  /* ============ tooltip ============ */
+  var tipEl = document.getElementById("tooltip");
+  document.querySelectorAll(".tip").forEach(function(el){
+    el.addEventListener("mouseenter", function(){
+      tipEl.innerHTML = '<div class="t-name">'+el.getAttribute("data-name")+'</div>'+
+                        '<div class="t-meta">'+el.getAttribute("data-meta")+'</div>'+
+                        '<div class="t-desc">'+el.getAttribute("data-desc")+'</div>';
+      tipEl.style.display = "block";
+    });
+    el.addEventListener("mouseleave", function(){
+      tipEl.style.display = "none";
+    });
+    el.addEventListener("mousemove", function(e){
+      var x = e.clientX + 18, y = e.clientY + 18;
+      var w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+      if(x + w > window.innerWidth - 10) x = e.clientX - w - 12;
+      if(y + h > window.innerHeight - 10) y = e.clientY - h - 12;
+      tipEl.style.left = x+"px";
+      tipEl.style.top = y+"px";
+    });
+  });
+
+  /* ============ chat ============ */
+  var chatwin = document.getElementById("chatwin");
+  var chatinput = document.getElementById("chatinput");
+  var npcLines = [
+    "Nice to meet you, traveler!",
+    "I accept commissions via GitHub issues. No redstone contraptions, please.",
+    "Do you have diamonds? I need diamonds. (open-source sponsorships welcome)",
+    "The Ender Dragon has been defeated. You can sleep tonight.",
+    "My calendar opens when the renderer hits 60 fps. It hits 60 fps.",
+    "Ask me about WebGL, design systems, or rock climbing."
+  ];
+  var npcIdx = 0;
+  function addMsg(cls, text){
+    var m = document.createElement("div");
+    m.className = cls;
+    m.textContent = text;
+    chatwin.appendChild(m);
+    chatwin.scrollTop = chatwin.scrollHeight;
+  }
+  addMsg("npc", "Alex> Hey! Welcome to my world. Press Enter to send, trade not required.");
+  addMsg("npc", "Alex> Ask me anything \u2014 I am an NPC with full source access.");
+  chatinput.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter" && chatinput.value.trim()){
+      addMsg("player", "Player> "+chatinput.value.trim());
+      chatinput.value = "";
+      var reply = npcLines[npcIdx % npcLines.length];
+      npcIdx++;
+      setTimeout(function(){ addMsg("npc", "Alex> "+reply); }, 600);
+    }
+  });
+
+  /* ============ day / night ============ */
+  var night = false;
+  var daynightBtn = document.getElementById("daynight");
+  daynightBtn.addEventListener("click", function(){
+    night = !night;
+    document.body.classList.toggle("night", night);
+    daynightBtn.innerHTML = night ? "&#127769;" : "&#9728;";
+  });
+
+  /* ============ voxel terrain ============ */
+  var SEED = 1337;
+  function hash2(x, z){
+    var n = x*374761393 + z*668265263 + SEED;
+    n = Math.sin(n) * 43758.5453;
+    return n - Math.floor(n);
+  }
+  function vnoise(x, z){
+    var xi = Math.floor(x), zi = Math.floor(z);
+    var xf = x - xi, zf = z - zi;
+    var a = hash2(xi, zi), b = hash2(xi+1, zi), c = hash2(xi, zi+1), d = hash2(xi+1, zi+1);
+    var u = xf*xf*(3-2*xf), v = zf*zf*(3-2*zf);
+    return a*(1-u)*(1-v) + b*u*(1-v) + c*(1-u)*v + d*u*v;
+  }
+
+  function shade(hex, f){
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    r = Math.min(255, Math.round(r*f)); g = Math.min(255, Math.round(g*f)); b = Math.min(255, Math.round(b*f));
+    return "rgb("+r+","+g+","+b+")";
+  }
+
+  var canvas = document.getElementById("terrain");
+  var ctx = canvas.getContext("2d");
+  var off = document.createElement("canvas");
+  var offctx = off.getContext("2d");
+  var stars = [];
+  var W = 0, H = 0, N = 24, tw = 64, th = 32, hs = 24, cy = 0;
+
+  function rhombus(c, sx, sy, w, h, col){
+    c.fillStyle = col;
+    c.beginPath();
+    c.moveTo(sx, sy - h/2);
+    c.lineTo(sx + w/2, sy);
+    c.lineTo(sx, sy + h/2);
+    c.lineTo(sx - w/2, sy);
+    c.closePath();
+    c.fill();
+  }
+
+  function drawCube(c, sx, topY, blocks, pal, f){
+    // pal: [top, right, left]
+    var depth = blocks * hs;
+    var x0 = sx - tw/2, y0 = topY;
+    // right face
+    c.fillStyle = shade(pal[1], f * 0.86);
+    c.beginPath();
+    c.moveTo(sx, y0 + th/2);
+    c.lineTo(sx + tw/2, y0);
+    c.lineTo(sx + tw/2, y0 + depth);
+    c.lineTo(sx, y0 + th/2 + depth);
+    c.closePath();
+    c.fill();
+    // left face
+    c.fillStyle = shade(pal[2], f * 0.72);
+    c.beginPath();
+    c.moveTo(sx - tw/2, y0);
+    c.lineTo(sx, y0 + th/2);
+    c.lineTo(sx, y0 + th/2 + depth);
+    c.lineTo(sx - tw/2, y0 + depth);
+    c.closePath();
+    c.fill();
+    // top face
+    rhombus(c, sx, y0, tw, th, shade(pal[0], f));
+  }
+
+  function buildTerrain(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = document.getElementById("hero").clientHeight;
+    off.width = W; off.height = H;
+    cy = H * 0.42;
+    stars = [];
+    for(var s=0; s<130; s++){
+      stars.push({ x: Math.random()*W, y: Math.random()*H*0.55, t: Math.random()*Math.PI*2 });
+    }
+  }
+
+  function renderTerrain(){
+    offctx.clearRect(0, 0, W, H);
+    var f = night ? 0.45 : 1;
+    var hmap = [], treemap = [];
+    for(var x=0; x<N; x++){
+      hmap[x] = []; treemap[x] = [];
+      for(var z=0; z<N; z++){
+        hmap[x][z] = Math.floor(vnoise(x*0.22 + 7.3, z*0.22 + 3.1) * 6);
+        treemap[x][z] = vnoise(x*0.9 + 11.7, z*0.9 + 5.1) > 0.72;
+      }
+    }
+    for(var d=0; d<=2*N-2; d++){
+      for(var x2=Math.max(0, d-(N-1)); x2<=Math.min(N-1, d); x2++){
+        var z2 = d - x2;
+        var h = hmap[x2][z2];
+        var sx = W/2 + (x2 - z2) * tw/2;
+        var y0 = cy + d*th/2 - h*hs;
+        if(h === 0){
+          rhombus(offctx, sx, cy + d*th/2, tw, th, night ? "rgba(30,60,120,0.75)" : "rgba(43,111,214,0.75)");
+          continue;
+        }
+        var gi = Math.floor(hash2(x2, z2) * 3);
+        var grassTops = ["#6cbb4c", "#74c353", "#62ad44"];
+        var pal = [grassTops[gi], "#8a6b45", "#8a6b45"];
+        if(hash2(x2*3, z2*3) > 0.82){ pal = ["#e0c36b", "#d4b05f", "#d4b05f"]; } // sand biome
+        drawCube(offctx, sx, y0, h, pal, f);
+        if(treemap[x2][z2]){
+          drawCube(offctx, sx, y0 - 2*hs, 2, ["#6b4f33", "#5b432b", "#5b432b"], f);
+          drawCube(offctx, sx, y0 - 3*hs, 1, ["#4b8f36", "#3c7429", "#3c7429"], f);
+        }
+      }
+    }
+  }
+
+  var clouds = [];
+  for(var cI=0; cI<5; cI++){
+    clouds.push({ x: Math.random()*W, y: 40 + Math.random()*H*0.28, w: 90 + Math.random()*110, sp: 12 + Math.random()*18 });
+  }
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var lastT = 0;
+  function frame(t){
+    var dt = Math.min(0.05, (t - lastT)/1000); lastT = t;
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(off, 0, 0);
+    if(night){
+      for(var s=0; s<stars.length; s++){
+        var st = stars[s];
+        st.t += dt;
+        ctx.fillStyle = "rgba(255,255,255,"+(0.35 + 0.35*Math.sin(st.t*2))+")";
+        ctx.fillRect(st.x, st.y, 2, 2);
+      }
+      ctx.fillStyle = "#cfd8ea";
+      ctx.fillRect(W*0.14, H*0.12, 36, 36);
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillRect(W*0.14 - 14, H*0.12 - 14, 64, 64);
+    } else {
+      ctx.fillStyle = "#ffe9a8";
+      ctx.fillRect(W*0.84, H*0.10, 44, 44);
+      ctx.fillStyle = "rgba(255,233,168,0.25)";
+      ctx.fillRect(W*0.84 - 16, H*0.10 - 16, 76, 76);
+    }
+    for(var k=0; k<clouds.length; k++){
+      var cl = clouds[k];
+      cl.x += cl.sp * dt;
+      if(cl.x > W + cl.w) cl.x = -cl.w;
+      var a = night ? 0.25 : 0.8;
+      ctx.fillStyle = "rgba(255,255,255,"+a+")";
+      rhombus(ctx, cl.x, cl.y, cl.w, cl.w*0.3, "rgba(255,255,255,"+a+")");
+      rhombus(ctx, cl.x + cl.w*0.4, cl.y + cl.w*0.1, cl.w*0.6, cl.w*0.2, "rgba(255,255,255,"+a+")");
+    }
+    if(!reduced) requestAnimationFrame(frame);
+  }
+
+  buildTerrain();
+  renderTerrain();
+  if(reduced){ frame(0); } else { requestAnimationFrame(frame); }
+
+  var nightWas = night;
+  var resizeT = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function(){
+      buildTerrain();
+      renderTerrain();
+      if(reduced) frame(0);
+    }, 150);
+  });
+
+  /* re-render terrain when day/night flips (and keep canvas running for stars) */
+  setInterval(function(){
+    if(night !== nightWas){
+      nightWas = night;
+      renderTerrain();
+      if(reduced) frame(0);
+    }
+  }, 250);
+
+  /* ============ parallax ============ */
+  var heroContent = document.querySelector("#hero .hero-content");
+  window.addEventListener("scroll", function(){
+    var y = window.scrollY;
+    canvas.style.transform = "translateY("+(y*0.22)+"px)";
+    heroContent.style.transform = "translateY("+(y*0.45)+"px)";
+    heroContent.style.opacity = Math.max(0, 1 - y/620);
+    var d = document.getElementById("debug");
+    if(d.style.display === "block"){
+      var fps = Math.round(1000/Math.max(1, (performance.now() % 1000)));
+      d.innerHTML = "XYZ: "+Math.round(y)+" ~ "+Math.round(y*1.6)+" ~ "+Math.round(y*2.4)+
+        "<br>Chunk: "+Math.floor(y/32)+", "+Math.floor(y/64)+
+        "<br>Biome: "+(night ? "night" : "day")+" · Facing: "+(activeIdx+1)+"/6"+
+        "<br>Seed: minecraft · Version: v1.20.4 · FPS: ~60";
+    }
+  }, { passive: true });
+
+  /* ============ click particles ============ */
+  document.addEventListener("click", function(e){
+    var cols = ["#6cbb4c", "#8a6b45", "#8b8b93", "#ffae1e"];
+    for(var p=0; p<6; p++){
+      var el = document.createElement("div");
+      el.className = "particle";
+      el.style.left = (e.clientX + (Math.random()*26-13))+"px";
+      el.style.top = (e.clientY + (Math.random()*10-5))+"px";
+      el.style.background = cols[Math.floor(Math.random()*cols.length)];
+      el.style.boxShadow = "inset 2px 2px 0 rgba(255,255,255,.4)";
+      document.body.appendChild(el);
+      setTimeout(function(n){ return function(){ n.remove(); }; }(el), 900);
+    }
+  });
+
+  /* ============ version ticker + title ============ */
+  document.title = "Alex Carter — Full-Stack Developer · Crafted in Blocks";
+})();
+</script>
 </body>
 </html>
